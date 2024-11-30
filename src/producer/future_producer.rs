@@ -236,24 +236,28 @@ where
     }
 }
 
-impl<R> FromClientConfig for FutureProducer<DefaultClientContext, R>
+impl<R, Part> FromClientConfig for FutureProducer<DefaultClientContext, R, Part>
 where
     R: AsyncRuntime,
+    Part: Partitioner + Send + Sync + 'static,
 {
-    fn from_config(config: &ClientConfig) -> KafkaResult<FutureProducer<DefaultClientContext, R>> {
+    fn from_config(
+        config: &ClientConfig,
+    ) -> KafkaResult<FutureProducer<DefaultClientContext, R, Part>> {
         FutureProducer::from_config_and_context(config, DefaultClientContext)
     }
 }
 
-impl<C, R> FromClientConfigAndContext<C> for FutureProducer<C, R>
+impl<C, R, Part> FromClientConfigAndContext<C> for FutureProducer<C, R, Part>
 where
     C: ClientContext + 'static,
     R: AsyncRuntime,
+    Part: Partitioner + Send + Sync + 'static,
 {
     fn from_config_and_context(
         config: &ClientConfig,
         context: C,
-    ) -> KafkaResult<FutureProducer<C, R>> {
+    ) -> KafkaResult<FutureProducer<C, R, Part>> {
         let future_context = FutureProducerContext {
             wrapped_context: context,
         };
@@ -283,10 +287,11 @@ impl Future for DeliveryFuture {
     }
 }
 
-impl<C, R> FutureProducer<C, R>
+impl<C, R, Part> FutureProducer<C, R, Part>
 where
     C: ClientContext + 'static,
     R: AsyncRuntime,
+    Part: Partitioner,
 {
     /// Sends a message to Kafka, returning the result of the send.
     ///
